@@ -10,12 +10,13 @@ var COLUMN_GAP = 50;
 var TEXT_WIDTH = 40;
 var BAR_HEIGHT = 150;
 var BAR_WIDTH = 40;
-var textColor = '#000';
 var DESCRIPTION_INDENT = 20;
 
-var renderCloud = function (ctx, x, y, color) {
+var textColor = '#000';
+
+var renderCloud = function (ctx, x, y, width, height, color) {
   ctx.fillStyle = color;
-  ctx.fillRect(x, y, CLOUD_WIDTH, CLOUD_HEIGHT);
+  ctx.fillRect(x, y, width, height);
 };
 
 var getMaxElement = function (arr) {
@@ -34,46 +35,50 @@ var randomizePercent = function () {
   return Math.floor(Math.random() * 101) + '%';
 };
 
+var renderText = function (ctx, text, x, y) {
+  var stringsArr = text.split('/n');
+  stringsArr.forEach(function (string, i) {
+    ctx.fillText(string, x, y + FONT_GAP * (i + 1));
+  });
+};
+
 window.renderStatistics = function (ctx, names, times) {
-  renderCloud(ctx, CLOUD_X + GAP, CLOUD_Y + GAP, 'rgba(0, 0, 0, 0.7)');
-  renderCloud(ctx, CLOUD_X, CLOUD_Y, '#fff');
+  renderCloud(ctx, CLOUD_X + GAP, CLOUD_Y + GAP, CLOUD_WIDTH, CLOUD_HEIGHT, 'rgba(0, 0, 0, 0.7)');
+  renderCloud(ctx, CLOUD_X, CLOUD_Y, CLOUD_WIDTH, CLOUD_HEIGHT, '#fff');
 
   ctx.font = '16px "PT Mono"';
   ctx.fillStyle = textColor;
-  ctx.fillText('Ура вы победили!', CLOUD_X + GAP, CLOUD_Y + DESCRIPTION_INDENT + FONT_GAP);
-  ctx.fillText('Список результатов:', CLOUD_X + GAP, CLOUD_Y + DESCRIPTION_INDENT + FONT_GAP * 2);
+  renderText(ctx, 'Ура вы победили!/nСписок результатов:', CLOUD_X + GAP, CLOUD_Y + DESCRIPTION_INDENT);
 
-  var renderLabels = function (context, text, n) {
+  var renderResult = function (context, text, xCoordinate, n, noResults) {
     context.fillStyle = textColor;
-    context.fillText(text, CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * n, CLOUD_Y + CLOUD_HEIGHT - GAP);
+    context.fillText(text, xCoordinate, CLOUD_Y + CLOUD_HEIGHT - GAP);
+    if (noResults === false) {
+      ctx.fillText(Math.round(times[n]), xCoordinate, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[n] / maxTime - GAP);
+      if (names[n] === 'Вы') {
+        ctx.fillStyle = 'rgba(255, 0, 0, 1)';
+      } else {
+        ctx.fillStyle = 'hsl(255,' + randomizePercent() + ',' + randomizePercent() + ')';
+      }
+      ctx.fillRect(xCoordinate, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[n] / maxTime, BAR_WIDTH, BAR_HEIGHT * times[n] / maxTime);
+    }
   };
 
   var maxTime = getMaxElement(times);
 
   for (var i = 0; i < Math.min(names.length, times.length); i++) {
-    renderLabels(ctx, names[i], i);
-    ctx.fillText(Math.round(times[i]), CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[i] / maxTime - GAP);
-    if (names[i] === 'Вы') {
-      ctx.fillStyle = 'rgba(255, 0, 0, 1)';
-    } else {
-      ctx.fillStyle = 'hsl(255,' + randomizePercent() + ',' + randomizePercent() + ')';
-    }
-    ctx.fillRect(CLOUD_X + COLUMN_GAP + (BAR_WIDTH + COLUMN_GAP) * i, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[i] / maxTime, BAR_WIDTH, BAR_HEIGHT * times[i] / maxTime);
+    renderResult(ctx, names[i], CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, i, false);
   }
 
   if (names.length > times.length) {
     for (i = times.length; i < names.length; i++) {
-      renderLabels(ctx, names[i], i);
-      ctx.fillText(Math.round(times[i]), CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[i] / maxTime - GAP);
+      renderResult(ctx, names[i], CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, i, true);
     }
   }
 
   if (times.length > names.length) {
     for (i = names.length; i < times.length; i++) {
-      renderLabels(ctx, '???', i);
-      ctx.fillText(Math.round(times[i]), CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[i] / maxTime - GAP);
-      ctx.fillStyle = 'hsl(255,' + randomizePercent() + ',' + randomizePercent() + ')';
-      ctx.fillRect(CLOUD_X + COLUMN_GAP + (BAR_WIDTH + COLUMN_GAP) * i, CLOUD_Y + CLOUD_HEIGHT - GAP - FONT_GAP - BAR_HEIGHT * times[i] / maxTime, BAR_WIDTH, BAR_HEIGHT * times[i] / maxTime);
+      renderResult(ctx, '???', CLOUD_X + COLUMN_GAP + (TEXT_WIDTH + COLUMN_GAP) * i, i, false);
     }
   }
 };
