@@ -29,7 +29,7 @@
     setup.querySelector('.setup-similar').classList.remove('hidden');
   };
 
-  window.backend.load(onLoadSuccess, window.onError);
+  window.backend.createHttpRequest(onLoadSuccess, window.onError, 'Ошибка загрузки', window.backend.loadURL, 'GET');
 
   var setupWizard = setup.querySelector('.setup-wizard');
   var wizardCoat = setupWizard.querySelector('.wizard-coat');
@@ -74,7 +74,7 @@
   var onFormSubmit = function (evt) {
     evt.preventDefault();
     var data = new FormData(form);
-    window.backend.save(data, onSaveSuccess, window.onError);
+    window.backend.createHttpRequest(onSaveSuccess, window.onError, 'Ошибка отправки данных', window.backend.saveURL, 'POST', data);
   };
 
   form.addEventListener('submit', onFormSubmit);
