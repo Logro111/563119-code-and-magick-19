@@ -11,6 +11,7 @@
   var setupSimularItem = document.querySelector('#similar-wizard-template').content.querySelector('.setup-similar-item');
   var fragment = document.createDocumentFragment();
   var form = setup.querySelector('.setup-wizard-form');
+  var loadedWizards = [];
 
   var renderWizard = function (wizard) {
     var newWizard = setupSimularItem.cloneNode(true);
@@ -21,13 +22,19 @@
     return newWizard;
   };
 
-  var onLoadSuccess = function (wizards) {
+  var renderWizards = function (wizards) {
+    setupSimilarList.innerHTML = '';
     for (var i = 0; i < WIZARDS_AMOUNT; i++) {
       fragment.appendChild(renderWizard(wizards[i]));
     }
     setupSimilarList.appendChild(fragment);
     setup.querySelector('.setup-similar').classList.remove('hidden');
   };
+  var onLoadSuccess = function (data) {
+    loadedWizards = data;
+    renderWizards(window.sortWizards(loadedWizards));
+  };
+
 
   window.backend.createHttpRequest(onLoadSuccess, window.onError, 'Ошибка загрузки', window.backend.loadURL, 'GET');
 
@@ -38,6 +45,8 @@
   var coatColorField = setup.querySelector('[name="coat-color"]');
   var eyesColorField = setup.querySelector('[name="eyes-color"]');
   var fireballColorField = setup.querySelector('[name="fireball-color"]');
+  var coatColor = wizardCoat.style.fill;
+  var eyesColor = 'black';
 
   var changeColor = function (arrElement, stylizedElement, propertyName, inputName) {
     var i = 1;
@@ -48,12 +57,23 @@
       stylizedElement.style[propertyName] = arrElement[i];
       inputName.value = arrElement[i];
       i++;
+      return inputName.value;
     };
   };
 
-  var onWizardCoatClick = changeColor(COAT_COLORS, wizardCoat, 'fill', coatColorField);
-  var onWizardEyesClick = changeColor(EYES_COLORS, wizardEyes, 'fill', eyesColorField);
+  var changeCoatColor = changeColor(COAT_COLORS, wizardCoat, 'fill', coatColorField);
+  var changeEyesColor = changeColor(EYES_COLORS, wizardEyes, 'fill', eyesColorField);
   var onFireballClick = changeColor(FIREBALL_COLORS, fireball, 'background-color', fireballColorField);
+  var debounceRender = window.debounce(renderWizards);
+
+  var onWizardCoatClick = function () {
+    window.setup.coatColor = changeCoatColor();
+    debounceRender(window.sortWizards(loadedWizards));
+  };
+  var onWizardEyesClick = function () {
+    window.setup.eyesColor = changeEyesColor();
+    debounceRender(window.sortWizards(loadedWizards));
+  };
 
   wizardEyes.addEventListener('click', function () {
     onWizardEyesClick();
@@ -78,4 +98,9 @@
   };
 
   form.addEventListener('submit', onFormSubmit);
+
+  window.setup = {
+    coatColor: coatColor,
+    eyesColor: eyesColor
+  };
 })();
